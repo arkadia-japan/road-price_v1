@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}ダッシュボード - 不動産評価額推定システム{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>ダッシュボード</h2>
+        <p class="text-muted">あなたの登録物件一覧</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('evaluate') }}" class="btn btn-primary">
+            新しい物件を評価
+        </a>
+    </div>
+</div>
+
+{% if properties %}
+    <div class="row g-4">
+        {% for property in properties %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ property.address }}</h5>
+                        <hr>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-6 small text-muted">土地面積</dt>
+                            <dd class="col-sm-6 small">{{ property.land_area }}㎡</dd>
+
+                            <dt class="col-sm-6 small text-muted">延床面積</dt>
+                            <dd class="col-sm-6 small">{{ property.total_floor_area }}㎡</dd>
+
+                            <dt class="col-sm-6 small text-muted">構造</dt>
+                            <dd class="col-sm-6 small">{{ property.building_structure }}</dd>
+
+                            <dt class="col-sm-6 small text-muted">建築年</dt>
+                            <dd class="col-sm-6 small">{{ property.build_year }}年</dd>
+                        </dl>
+                        <hr>
+                        <p class="card-text mb-2">
+                            <strong class="text-primary">合計評価額</strong><br>
+                            <span class="h5">{{ "{:,.0f}".format(property.total_valuation) }}円</span>
+                        </p>
+                        <p class="card-text small text-muted">
+                            登録日: {{ property.created_at.strftime('%Y年%m月%d日') }}
+                        </p>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('property_detail', property_id=property.id) }}" class="btn btn-sm btn-outline-primary">
+                                詳細
+                            </a>
+                            <form method="POST" action="{{ url_for('property_delete', property_id=property.id) }}"
+                                  onsubmit="return confirm('本当に削除しますか？');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">削除</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-house text-muted mb-3" viewBox="0 0 16 16">
+            <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5ZM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5 5 5Z"/>
+        </svg>
+        <h4 class="text-muted">物件が登録されていません</h4>
+        <p class="text-muted">最初の物件を評価してみましょう</p>
+        <a href="{{ url_for('evaluate') }}" class="btn btn-primary">物件を評価する</a>
+    </div>
+{% endif %}
+{% endblock %}

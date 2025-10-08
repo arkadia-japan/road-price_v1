@@ -1,0 +1,623 @@
+{% extends "base.html" %}
+
+{% block title %}不動産評価ツール - 不動産評価額推定システム{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<style>
+    .tab-content {
+        margin-top: 1.5rem;
+    }
+
+    .upload-area {
+        border: 3px dashed #007bff;
+        border-radius: 10px;
+        padding: 3rem 2rem;
+        text-align: center;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .upload-area:hover {
+        border-color: #0056b3;
+        background-color: #e7f1ff;
+    }
+
+    .upload-area.dragover {
+        border-color: #28a745;
+        background-color: #d4edda;
+        transform: scale(1.02);
+    }
+
+    .upload-icon {
+        font-size: 4rem;
+        color: #007bff;
+        margin-bottom: 1rem;
+    }
+
+    .result-card {
+        display: none;
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .valuation-amount {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+
+    .valuation-label {
+        font-size: 1.1rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+
+    .detail-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .detail-value {
+        color: #212529;
+    }
+
+    #loadingSpinner {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-2">不動産評価ツール</h2>
+            <p class="text-muted">固定資産登録事項証明書から自動で評価額を計算、または手動で入力してください。</p>
+        </div>
+    </div>
+
+    <!-- タブナビゲーション -->
+    <ul class="nav nav-tabs nav-fill mb-4" id="inputMethodTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="file-tab" data-bs-toggle="tab" data-bs-target="#file-upload"
+                    type="button" role="tab" aria-controls="file-upload" aria-selected="true">
+                <i class="bi bi-cloud-upload"></i> ファイルで自動入力
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-input"
+                    type="button" role="tab" aria-controls="manual-input" aria-selected="false">
+                <i class="bi bi-pencil-square"></i> 手動で入力
+            </button>
+        </li>
+    </ul>
+
+    <!-- タブコンテンツ -->
+    <div class="tab-content" id="inputMethodTabContent">
+        <!-- ファイルアップロードタブ -->
+        <div class="tab-pane fade show active" id="file-upload" role="tabpanel" aria-labelledby="file-tab">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-4">固定資産登録事項証明書をアップロード</h5>
+
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-icon">📄</div>
+                            <h5>ファイルをドラッグ＆ドロップ</h5>
+                            <p class="text-muted mb-3">または</p>
+                            <label for="fileInput" class="btn btn-primary btn-lg">
+                                ファイルを選択
+                            </label>
+                            <input type="file" id="fileInput" name="file" accept="image/*,.pdf" style="display: none;">
+                            <p class="text-muted mt-3 mb-0">
+                                <small>対応形式: JPG, PNG, PDF（最大10MB）</small>
+                            </p>
+                        </div>
+
+                        <div id="fileInfo" class="mt-3" style="display: none;">
+                            <div class="alert alert-info d-flex align-items-center">
+                                <i class="bi bi-file-earmark-text fs-4 me-3"></i>
+                                <div>
+                                    <strong>選択されたファイル:</strong>
+                                    <span id="fileName"></span>
+                                    (<span id="fileSize"></span>)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn" disabled>
+                                <i class="bi bi-calculator"></i> アップロードして評価額を計算
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 手動入力タブ -->
+        <div class="tab-pane fade" id="manual-input" role="tabpanel" aria-labelledby="manual-tab">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-4">物件情報を入力</h5>
+
+                    <form id="manualForm">
+                        <div class="mb-3">
+                            <label for="address" class="form-label">所在地 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-lg" id="address" name="address"
+                                   placeholder="例: 東京都渋谷区渋谷1-1-1" required>
+                            <div class="form-text">物件の所在地を正確に入力してください。</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="land_area" class="form-label">土地面積（㎡）<span class="text-danger">*</span></label>
+                                <input type="number" class="form-control form-control-lg" id="land_area" name="land_area"
+                                       step="0.01" min="0" placeholder="例: 150.50" required>
+                                <div class="form-text">土地の面積を平方メートルで入力。</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="total_floor_area" class="form-label">延床面積（㎡）<span class="text-danger">*</span></label>
+                                <input type="number" class="form-control form-control-lg" id="total_floor_area" name="total_floor_area"
+                                       step="0.01" min="0" placeholder="例: 200.00" required>
+                                <div class="form-text">建物の延べ床面積を入力。</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="building_structure" class="form-label">建物の構造 <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-lg" id="building_structure" name="building_structure" required>
+                                    <option value="">選択してください</option>
+                                    <option value="木造">木造</option>
+                                    <option value="鉄骨造">鉄骨造</option>
+                                    <option value="鉄筋コンクリート造">鉄筋コンクリート造</option>
+                                </select>
+                                <div class="form-text">建物の主要構造を選択。</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="build_year" class="form-label">建築年 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control form-control-lg" id="build_year" name="build_year"
+                                       min="1900" max="2025" placeholder="例: 2015" required>
+                                <div class="form-text">建物が建築された年を入力。</div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="alert alert-info" role="alert">
+                            <strong><i class="bi bi-info-circle"></i> 注意事項</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>評価額は簡易的な計算に基づく推定値です</li>
+                                <li>実際の固定資産税評価額とは異なる場合があります</li>
+                                <li>参考値としてご利用ください</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-calculator"></i> 評価額を計算
+                            </button>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">キャンセル</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ローディングスピナー -->
+    <div id="loadingSpinner" class="text-center my-5">
+        <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;" role="status">
+            <span class="visually-hidden">計算中...</span>
+        </div>
+        <p class="mt-3 text-muted">評価額を計算しています...</p>
+    </div>
+
+    <!-- 結果表示エリア -->
+    <div id="resultArea" class="result-card mt-5">
+        <h3 class="mb-4 text-center">評価結果</h3>
+
+        <div class="row g-4 mb-4">
+            <!-- 合計評価額 -->
+            <div class="col-lg-12">
+                <div class="card border-success shadow-lg">
+                    <div class="card-body text-center p-4">
+                        <div class="valuation-label">合計評価額</div>
+                        <div class="valuation-amount text-success" id="totalValuation">¥0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 土地の評価額 -->
+            <div class="col-md-6">
+                <div class="card border-primary shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="valuation-label">土地の評価額</div>
+                        <div class="valuation-amount text-primary" style="font-size: 2rem;" id="landValuation">¥0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 建物の評価額 -->
+            <div class="col-md-6">
+                <div class="card border-info shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="valuation-label">建物の評価額</div>
+                        <div class="valuation-amount text-info" style="font-size: 2rem;" id="buildingValuation">¥0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 詳細情報 -->
+        <div class="card shadow">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-file-text"></i> 評価の根拠情報</h5>
+            </div>
+            <div class="card-body">
+                <div class="detail-item">
+                    <div class="row">
+                        <div class="col-sm-4 detail-label">所在地</div>
+                        <div class="col-sm-8 detail-value" id="detailAddress">-</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="row">
+                        <div class="col-sm-4 detail-label">土地面積</div>
+                        <div class="col-sm-8 detail-value" id="detailLandArea">-</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="row">
+                        <div class="col-sm-4 detail-label">路線価（推定）</div>
+                        <div class="col-sm-8 detail-value" id="detailRoadPrice">-</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="row">
+                        <div class="col-sm-4 detail-label">建物構造</div>
+                        <div class="col-sm-8 detail-value" id="detailStructure">-</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="row">
+                        <div class="col-sm-4 detail-label">延床面積</div>
+                        <div class="col-sm-8 detail-value" id="detailFloorArea">-</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="row">
+                        <div class="col-sm-4 detail-label">建築年</div>
+                        <div class="col-sm-8 detail-value" id="detailBuildYear">-</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="row">
+                        <div class="col-sm-4 detail-label">築年数</div>
+                        <div class="col-sm-8 detail-value" id="detailAge">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button class="btn btn-lg btn-success" id="saveResultBtn">
+                <i class="bi bi-save"></i> この結果を保存
+            </button>
+            <button class="btn btn-lg btn-outline-secondary" id="newCalculationBtn">
+                <i class="bi bi-arrow-repeat"></i> 新しい計算
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 要素の取得
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const uploadForm = document.getElementById('uploadForm');
+    const manualForm = document.getElementById('manualForm');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const resultArea = document.getElementById('resultArea');
+    const saveResultBtn = document.getElementById('saveResultBtn');
+    const newCalculationBtn = document.getElementById('newCalculationBtn');
+
+    // ドラッグ＆ドロップイベント
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, () => {
+            uploadArea.classList.add('dragover');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, () => {
+            uploadArea.classList.remove('dragover');
+        });
+    });
+
+    // ファイルドロップ処理
+    uploadArea.addEventListener('drop', function(e) {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFileSelect();
+        }
+    });
+
+    // クリックでファイル選択
+    uploadArea.addEventListener('click', function(e) {
+        if (e.target.tagName !== 'LABEL' && e.target.tagName !== 'INPUT') {
+            fileInput.click();
+        }
+    });
+
+    // ファイル選択時の処理
+    fileInput.addEventListener('change', handleFileSelect);
+
+    function handleFileSelect() {
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.style.display = 'block';
+            uploadBtn.disabled = false;
+        }
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+        return (bytes / 1048576).toFixed(2) + ' MB';
+    }
+
+    // ファイルアップロードフォーム送信
+    uploadForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('input_method', 'file');
+
+        await submitValuation(formData);
+    });
+
+    // 手動入力フォーム送信
+    manualForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // フォームデータをJSONオブジェクトに変換
+        const formData = {
+            address: document.getElementById('address').value,
+            land_area: parseFloat(document.getElementById('land_area').value),
+            total_floor_area: parseFloat(document.getElementById('total_floor_area').value),
+            building_structure: document.getElementById('building_structure').value,
+            build_year: parseInt(document.getElementById('build_year').value)
+        };
+
+        await submitValuationJSON(formData);
+    });
+
+    // 評価額計算リクエスト（ファイルアップロード用）
+    async function submitValuation(formData) {
+        try {
+            // ローディング表示
+            resultArea.style.display = 'none';
+            loadingSpinner.style.display = 'block';
+
+            const response = await fetch('{{ url_for("valuation") }}', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            loadingSpinner.style.display = 'none';
+
+            if (data.success) {
+                displayResult(data.result);
+            } else {
+                showError(data.error || '評価額の計算に失敗しました。');
+            }
+        } catch (error) {
+            loadingSpinner.style.display = 'none';
+            showError('通信エラーが発生しました。インターネット接続を確認してください。');
+            console.error('Error:', error);
+        }
+    }
+
+    // 評価額計算リクエスト（手動入力用・JSON API）
+    async function submitValuationJSON(data) {
+        try {
+            // ローディング表示
+            resultArea.style.display = 'none';
+            loadingSpinner.style.display = 'block';
+
+            const response = await fetch('{{ url_for("api_valuate") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            loadingSpinner.style.display = 'none';
+
+            if (result.success) {
+                displayResult(result.result);
+            } else {
+                showError(result.error || '評価額の計算に失敗しました。');
+            }
+        } catch (error) {
+            loadingSpinner.style.display = 'none';
+            showError('通信エラーが発生しました。インターネット接続を確認してください。');
+            console.error('Error:', error);
+        }
+    }
+
+    // エラー表示
+    function showError(message) {
+        // エラーメッセージを含むアラートを表示
+        const errorAlert = document.createElement('div');
+        errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+        errorAlert.setAttribute('role', 'alert');
+        errorAlert.innerHTML = `
+            <strong><i class="bi bi-exclamation-triangle"></i> エラー</strong>
+            <p class="mb-0 mt-2">${message}</p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        // 既存のエラーアラートを削除
+        const existingAlert = document.querySelector('.alert-danger');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+
+        // ローディングスピナーの後に挿入
+        loadingSpinner.parentElement.insertBefore(errorAlert, loadingSpinner.nextSibling);
+
+        // 5秒後に自動的に非表示
+        setTimeout(() => {
+            errorAlert.classList.remove('show');
+            setTimeout(() => errorAlert.remove(), 150);
+        }, 5000);
+    }
+
+    // 結果表示
+    function displayResult(result) {
+        // 既存のエラーアラートを削除
+        const existingAlert = document.querySelector('.alert-danger');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+
+        // 評価額の表示
+        document.getElementById('totalValuation').textContent =
+            '¥' + result.total_valuation.toLocaleString();
+        document.getElementById('landValuation').textContent =
+            '¥' + result.land_valuation.toLocaleString();
+        document.getElementById('buildingValuation').textContent =
+            '¥' + result.building_valuation.toLocaleString();
+
+        // 詳細情報の表示
+        document.getElementById('detailAddress').textContent = result.address;
+        document.getElementById('detailLandArea').textContent = result.land_area + ' ㎡';
+        document.getElementById('detailRoadPrice').textContent =
+            '¥' + result.road_price.toLocaleString() + ' / ㎡';
+        document.getElementById('detailStructure').textContent = result.building_structure;
+        document.getElementById('detailFloorArea').textContent = result.total_floor_area + ' ㎡';
+        document.getElementById('detailBuildYear').textContent = result.build_year + ' 年';
+
+        const currentYear = new Date().getFullYear();
+        const age = currentYear - result.build_year;
+        document.getElementById('detailAge').textContent = age + ' 年';
+
+        // 結果エリアを表示
+        resultArea.style.display = 'block';
+        resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // 保存用にデータを保持
+        saveResultBtn.dataset.result = JSON.stringify(result);
+    }
+
+    // 結果保存
+    saveResultBtn.addEventListener('click', async function() {
+        const result = JSON.parse(this.dataset.result);
+
+        // 保存中の表示
+        const originalText = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>保存中...';
+
+        try {
+            const response = await fetch('{{ url_for("save_property") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(result)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // 成功メッセージを表示
+                const successAlert = document.createElement('div');
+                successAlert.className = 'alert alert-success alert-dismissible fade show';
+                successAlert.setAttribute('role', 'alert');
+                successAlert.innerHTML = `
+                    <strong><i class="bi bi-check-circle"></i> 保存完了</strong>
+                    <p class="mb-0 mt-2">評価結果を保存しました。ダッシュボードに移動します...</p>
+                `;
+                resultArea.insertBefore(successAlert, resultArea.firstChild);
+
+                // 1.5秒後にダッシュボードへリダイレクト
+                setTimeout(() => {
+                    window.location.href = '{{ url_for("dashboard") }}';
+                }, 1500);
+            } else {
+                showError('保存に失敗しました: ' + (data.error || '不明なエラー'));
+                this.disabled = false;
+                this.innerHTML = originalText;
+            }
+        } catch (error) {
+            showError('保存中に通信エラーが発生しました。もう一度お試しください。');
+            this.disabled = false;
+            this.innerHTML = originalText;
+            console.error('Error:', error);
+        }
+    });
+
+    // 新しい計算
+    newCalculationBtn.addEventListener('click', function() {
+        resultArea.style.display = 'none';
+        uploadForm.reset();
+        manualForm.reset();
+        fileInfo.style.display = 'none';
+        uploadBtn.disabled = true;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+});
+</script>
+{% endblock %}

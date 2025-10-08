@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}評価額算出 - 不動産評価額推定システム{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h2 class="mb-4">評価額算出</h2>
+
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('evaluate') }}">
+                    <div class="mb-3">
+                        <label for="address" class="form-label">所在地 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="address" name="address"
+                               placeholder="例: 東京都渋谷区渋谷1-1-1" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="land_area" class="form-label">土地面積（㎡）<span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="land_area" name="land_area"
+                                   step="0.1" min="0" placeholder="例: 150.5" required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="total_floor_area" class="form-label">延床面積（㎡）<span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="total_floor_area" name="total_floor_area"
+                                   step="0.1" min="0" placeholder="例: 200.0" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="building_structure" class="form-label">建物の構造 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="building_structure" name="building_structure" required>
+                                <option value="">選択してください</option>
+                                <option value="木造">木造</option>
+                                <option value="鉄骨造">鉄骨造</option>
+                                <option value="鉄筋コンクリート造">鉄筋コンクリート造</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="build_year" class="form-label">建築年 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="build_year" name="build_year"
+                                   min="1900" max="2025" placeholder="例: 2015" required>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="alert alert-info" role="alert">
+                        <strong>ℹ️ 注意事項</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>評価額は簡易的な計算に基づく推定値です</li>
+                            <li>実際の固定資産税評価額とは異なる場合があります</li>
+                            <li>参考値としてご利用ください</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">評価額を計算</button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">キャンセル</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

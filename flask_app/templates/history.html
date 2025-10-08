@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}評価履歴 - 不動産評価額推定システム{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-2">評価履歴</h2>
+            <p class="text-muted">これまでに計算した不動産評価額の履歴を確認できます。</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('valuation') }}" class="btn btn-primary">
+                <i class="bi bi-calculator"></i> 新しい評価
+            </a>
+        </div>
+    </div>
+
+    {% if histories %}
+        <!-- デスクトップ版テーブル -->
+        <div class="card shadow d-none d-md-block">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">評価日時</th>
+                                <th scope="col">所在地</th>
+                                <th scope="col">建物構造</th>
+                                <th scope="col">土地面積</th>
+                                <th scope="col">延床面積</th>
+                                <th scope="col" class="text-end">合計評価額</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for history in histories %}
+                            <tr>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ history.created_at.strftime('%Y年%m月%d日 %H:%M') }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <strong>{{ history.address }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ history.building_structure }}</span>
+                                </td>
+                                <td>{{ history.land_area }} ㎡</td>
+                                <td>{{ history.total_floor_area }} ㎡</td>
+                                <td class="text-end">
+                                    <strong class="text-success">
+                                        ¥{{ "{:,}".format(history.total_valuation|int) }}
+                                    </strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- モバイル版カード -->
+        <div class="d-md-none">
+            {% for history in histories %}
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="mb-0">{{ history.address }}</h6>
+                        <span class="badge bg-secondary">{{ history.building_structure }}</span>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <small class="text-muted d-block">土地面積</small>
+                            <strong>{{ history.land_area }} ㎡</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">延床面積</small>
+                            <strong>{{ history.total_floor_area }} ㎡</strong>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            {{ history.created_at.strftime('%Y/%m/%d %H:%M') }}
+                        </small>
+                        <h5 class="mb-0 text-success">
+                            ¥{{ "{:,}".format(history.total_valuation|int) }}
+                        </h5>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ページネーション -->
+        {% if pagination.pages > 1 %}
+        <nav aria-label="評価履歴ページネーション" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <!-- 前へボタン -->
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{% if pagination.has_prev %}{{ url_for('history', page=pagination.prev_num) }}{% else %}#{% endif %}">
+                        <i class="bi bi-chevron-left"></i> 前へ
+                    </a>
+                </li>
+
+                <!-- ページ番号 -->
+                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('history', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- 次へボタン -->
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{% if pagination.has_next %}{{ url_for('history', page=pagination.next_num) }}{% else %}#{% endif %}">
+                        次へ <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+
+        <!-- 統計情報 -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-2">総評価回数</h6>
+                        <h3 class="mb-0">{{ pagination.total }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-2">平均評価額</h6>
+                        <h3 class="mb-0 text-success">
+                            {% set avg = (histories|sum(attribute='total_valuation') / histories|length)|int if histories else 0 %}
+                            ¥{{ "{:,}".format(avg) }}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-2">最高評価額</h6>
+                        <h3 class="mb-0 text-primary">
+                            {% set max_val = histories|map(attribute='total_valuation')|max if histories else 0 %}
+                            ¥{{ "{:,}".format(max_val|int) }}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- 履歴が空の場合 -->
+        <div class="card shadow">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-clock-history" style="font-size: 4rem; color: #6c757d;"></i>
+                <h4 class="mt-3 mb-2">評価履歴がありません</h4>
+                <p class="text-muted mb-4">
+                    まだ不動産の評価を行っていません。<br>
+                    評価ツールを使って最初の評価を行いましょう。
+                </p>
+                <a href="{{ url_for('valuation') }}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-calculator"></i> 評価を開始
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<style>
+    .table thead th {
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .table tbody tr {
+        transition: background-color 0.2s;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .card {
+        border: none;
+    }
+
+    .pagination .page-link {
+        color: #007bff;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+</style>
+{% endblock %}

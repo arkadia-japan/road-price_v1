@@ -1,0 +1,79 @@
+/* カスタムスタイル */
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* カードのホバーエフェクト */
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ナビゲーションバーのカスタマイズ */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+
+/* フォームのスタイル */
+.form-label {
+    font-weight: 500;
+}
+
+/* アラートのアニメーション */
+.alert {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ボタンのホバーエフェクト */
+.btn {
+    transition: all 0.2s;
+}
+
+/* カードフッターのスタイル */
+.card-footer {
+    background-color: #f8f9fa;
+}
+
+/* テーブルのレスポンシブ対応 */
+@media (max-width: 768px) {
+    .table {
+        font-size: 0.875rem;
+    }
+}
+
+/* エラーページのスタイル */
+.error-page {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.error-code {
+    font-size: 6rem;
+    font-weight: bold;
+    color: #6c757d;
+}

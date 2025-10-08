@@ -1,0 +1,18 @@
+# Webフレームワーク
+Flask>=3.0.0
+Flask-SQLAlchemy>=3.1.0
+Flask-Login>=0.6.3
+
+# データベース
+SQLAlchemy>=2.0.0
+
+# セキュリティ
+Werkzeug>=3.0.0
+
+# OCR機能（親ディレクトリのモジュールで使用）
+Pillow>=10.0.0
+pytesseract>=0.3.10
+
+# スクレイピング（路線価取得用）
+requests>=2.31.0
+beautifulsoup4>=4.12.0
