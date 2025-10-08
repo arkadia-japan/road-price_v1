@@ -100,9 +100,62 @@ STREAMLIT_SERVER_HEADLESS=true python3 -m streamlit run app.py
 - `test_full_pipeline.py` - OCR→パーサーの完全なパイプラインテスト
 - `create_test_image.py` - テスト用物件画像生成スクリプト
 
-## デプロイ（Render）
+## デプロイ
 
-### Flask Web版のデプロイ手順
+### 自前サーバーへのデプロイ（推奨）
+
+**Ubuntu/Debian系サーバーでの本番運用**
+
+#### クイックスタート
+
+```bash
+# リポジトリをクローン
+git clone https://github.com/arkadia-japan/road-price_v1.git
+cd road-price_v1
+
+# 自動セットアップスクリプトを実行
+sudo bash deployment/setup.sh
+```
+
+セットアップ完了後、以下のコマンドでサービスを起動：
+
+```bash
+# systemdサービスを設定
+sudo cp deployment/road-price.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable road-price
+sudo systemctl start road-price
+
+# Nginxを設定
+sudo cp deployment/nginx.conf /etc/nginx/sites-available/road-price
+sudo nano /etc/nginx/sites-available/road-price  # ドメイン名を編集
+sudo ln -s /etc/nginx/sites-available/road-price /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+
+# ファイアウォール設定
+sudo ufw allow 'Nginx Full'
+sudo ufw allow OpenSSH
+sudo ufw enable
+```
+
+**詳細な手順は [`deployment/DEPLOYMENT.md`](deployment/DEPLOYMENT.md) を参照してください。**
+
+#### 特徴
+
+- ✅ Nginx + Gunicorn による高速・安定運用
+- ✅ PostgreSQL データベース（または SQLite）
+- ✅ systemd によるプロセス管理
+- ✅ Let's Encrypt による無料SSL証明書
+- ✅ 完全なコントロール・カスタマイズ可能
+
+---
+
+### クラウドへのデプロイ（Render）
+
+**簡単・無料で始めたい場合**
+
+#### Flask Web版のデプロイ手順
 
 1. **GitHubリポジトリを準備**
    - このリポジトリをGitHubにプッシュ

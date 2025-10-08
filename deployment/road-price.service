@@ -1,0 +1,36 @@
+[Unit]
+Description=Road Price Valuation System - Flask Application
+After=network.target postgresql.service
+
+[Service]
+Type=notify
+User=roadprice
+Group=roadprice
+WorkingDirectory=/home/roadprice/road-price_v1
+Environment="PATH=/home/roadprice/road-price_v1/venv/bin"
+EnvironmentFile=/home/roadprice/road-price_v1/.env
+ExecStart=/home/roadprice/road-price_v1/venv/bin/gunicorn \
+    --workers 3 \
+    --bind unix:/home/roadprice/road-price_v1/road-price.sock \
+    --chdir /home/roadprice/road-price_v1/flask_app \
+    --access-logfile /var/log/road-price/access.log \
+    --error-logfile /var/log/road-price/error.log \
+    --log-level info \
+    app:app
+
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+# セキュリティ設定
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/roadprice/road-price_v1/flask_app/instance /home/roadprice/road-price_v1/flask_app/uploads /var/log/road-price
+
+# リソース制限
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target
