@@ -1,5 +1,21 @@
+# Streamlit UI版の依存関係
 streamlit>=1.28.0
+
+# Flask Web版の依存関係
+Flask>=3.0.0
+Flask-SQLAlchemy>=3.1.0
+Flask-Login>=0.6.3
+SQLAlchemy>=2.0.0
+Werkzeug>=3.0.0
+
+# 本番環境用データベース（Render用）
+psycopg2-binary>=2.9.9
+
+# 共通の依存関係
 requests>=2.31.0
 beautifulsoup4>=4.12.0
 Pillow>=10.0.0
 pytesseract>=0.3.10
+
+# WSGI サーバー（本番環境用）
+gunicorn>=21.2.0

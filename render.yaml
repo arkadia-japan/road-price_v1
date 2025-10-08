@@ -1,0 +1,22 @@
+services:
+  # Flask Webアプリケーション
+  - type: web
+    name: road-price-app
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn --chdir flask_app app:app"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.9.6
+      - key: DATABASE_URL
+        fromDatabase:
+          name: road-price-db
+          property: connectionString
+
+databases:
+  # PostgreSQLデータベース
+  - name: road-price-db
+    databaseName: road_price
+    user: road_price_user

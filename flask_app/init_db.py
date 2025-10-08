@@ -9,9 +9,10 @@ from models import User, Property
 def init_database():
     """データベースを初期化"""
     with app.app_context():
-        # instanceディレクトリの作成
-        instance_path = os.path.join(os.path.dirname(__file__), 'instance')
-        os.makedirs(instance_path, exist_ok=True)
+        # instanceディレクトリの作成（SQLiteの場合のみ）
+        if 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
+            instance_path = os.path.join(os.path.dirname(__file__), 'instance')
+            os.makedirs(instance_path, exist_ok=True)
 
         # 既存のテーブルを削除して再作成
         print('データベーステーブルを作成中...')
@@ -21,10 +22,10 @@ def init_database():
         # 初期データの投入（オプション）
         # 既にユーザーが存在する場合はスキップ
         if User.query.count() == 0:
-            print('\nテストユーザーを作成しますか？ (y/n): ', end='')
-            response = input().lower()
+            # 環境変数でテストユーザー作成を制御（本番環境では作成しない）
+            create_test_user = os.environ.get('CREATE_TEST_USER', 'false').lower() == 'true'
 
-            if response == 'y':
+            if create_test_user:
                 from werkzeug.security import generate_password_hash
 
                 test_user = User(
@@ -37,6 +38,8 @@ def init_database():
                 print('✓ テストユーザーを作成しました。')
                 print('  メールアドレス: test@example.com')
                 print('  パスワード: password123')
+            else:
+                print('テストユーザーの作成をスキップしました。')
         else:
             print(f'\n既に {User.query.count()} 人のユーザーが登録されています。')
 

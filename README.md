@@ -100,6 +100,68 @@ STREAMLIT_SERVER_HEADLESS=true python3 -m streamlit run app.py
 - `test_full_pipeline.py` - OCR→パーサーの完全なパイプラインテスト
 - `create_test_image.py` - テスト用物件画像生成スクリプト
 
+## デプロイ（Render）
+
+### Flask Web版のデプロイ手順
+
+1. **GitHubリポジトリを準備**
+   - このリポジトリをGitHubにプッシュ
+
+2. **Renderにサインアップ**
+   - https://render.com にアクセス
+   - GitHubアカウントで登録
+
+3. **新しいBlueprint作成**
+   - Dashboard > New > Blueprint
+   - GitHubリポジトリを選択
+   - `render.yaml` が自動検出される
+
+4. **環境変数の設定**
+   - `SECRET_KEY`: ランダムな文字列（自動生成される）
+   - `DATABASE_URL`: PostgreSQLのURL（自動設定される）
+
+5. **デプロイ**
+   - "Apply" ボタンをクリック
+   - 自動的にビルド・デプロイが開始
+
+6. **アクセス**
+   - デプロイ完了後、提供されたURLでアクセス可能
+   - 例: `https://road-price-app.onrender.com`
+
+### 注意事項（Render）
+
+- 無料プランでは15分間アクセスがないとスリープ状態になります
+- 初回アクセス時は起動に30秒程度かかります
+- OCR機能はTesseractが自動インストールされます
+
+## ファイル構成
+
+### メインモジュール
+- `property_data.py` - 物件データクラス
+- `valuation.py` - 評価額計算ロジック
+- `scraper.py` - 国税庁ウェブサイトスクレイピング
+- `ocr_utils.py` - OCR（文字認識）ユーティリティ
+- `text_parser.py` - OCRテキスト解析・物件情報抽出
+- `app.py` - Streamlit UIアプリ
+- `main.py` - コマンドライン実行用スクリプト
+
+### Flask Web版
+- `flask_app/` - Webアプリケーション
+  - `app.py` - メインアプリケーション
+  - `models.py` - データベースモデル
+  - `templates/` - HTMLテンプレート
+  - `static/` - 静的ファイル
+
+### デプロイ関連
+- `render.yaml` - Render デプロイ設定
+- `build.sh` - ビルドスクリプト
+- `.env.example` - 環境変数の例
+
+### テスト・ユーティリティ
+- `test_ocr.py` - OCR機能のテストスクリプト
+- `test_full_pipeline.py` - OCR→パーサーの完全なパイプラインテスト
+- `create_test_image.py` - テスト用物件画像生成スクリプト
+
 ## 注意事項
 
 ⚠️ この評価額はあくまで推定値です。実際の固定資産税評価額は、地方自治体による評価に基づきます。

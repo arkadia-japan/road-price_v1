@@ -16,7 +16,14 @@ app = Flask(__name__)
 
 # 設定
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "instance", "app.db")}'
+
+# データベース設定（本番環境ではPostgreSQL、開発環境ではSQLite）
+database_url = os.environ.get('DATABASE_URL')
+if database_url and database_url.startswith('postgres://'):
+    # Render等の古いPostgreSQL URLフォーマットを修正
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url or f'sqlite:///{os.path.join(basedir, "instance", "app.db")}'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 最大10MB
 app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'uploads')
